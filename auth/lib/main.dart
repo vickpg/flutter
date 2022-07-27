@@ -7,9 +7,25 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MaterialApp(
-    home: LoginPage(),
+  runApp(MaterialApp(
+    theme: ThemeData(primarySwatch: Colors.purple),
+    initialRoute: "/login",
+    routes: {
+      "/login": (context) => const LoginPage(),
+      "/home": (context) => const HomePage(),
+    },
   ));
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text("Usuário logado com sucesso")),
+    );
+  }
 }
 
 class LoginPage extends StatefulWidget {
@@ -20,59 +36,92 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  String? username;
+  String? password;
+  var isLoading = false;
+
+  final formKey = GlobalKey<FormState>();
+
+// parâmetros nomeados
+  void login({
+    required String username,
+    required String password,
+  }) async {
+    isLoading = true;
+    setState(() {});
+    final response = await apiLogin(username: username, password: password);
+    isLoading = false;
+    setState(() {});
+    if (response) {
+      Navigator.pushNamed(context, "/home");
+    }
+  }
+
+  bool validate() {
+    final form = formKey.currentState!;
+    if (form.validate()) {
+      form.save();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  String? validadeUsername(String? username) =>
+      username != null && username.isNotEmpty
+          ? null
+          : "O username precisa ser diferente de nulo";
+  String? validadePassword(String? password) =>
+      password != null && password.length >= 4
+          ? null
+          : "A senha precisa ter 4 caracteres";
+
+  Future<bool> apiLogin(
+      {required String username, required String password}) async {
+    await Future.delayed(const Duration(seconds: 3));
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(),
+        appBar: AppBar(
+          backgroundColor: Colors.purple,
+        ),
         body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [TextField(), TextField()],
-          ),
-        ));
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: "Username"),
+                    validator: (value) => validadeUsername(value),
+                    onSaved: (value) => username = value,
+                  ),
+                  TextFormField(
+                    decoration: const InputDecoration(labelText: "Password"),
+                    validator: (value) => validadePassword(value),
+                    obscureText: true,
+                    onSaved: (value) => password = value,
+                  ),
+                  if (isLoading)
+                    const CircularProgressIndicator()
+                  else
+                    TextButton(
+                        style: ButtonStyle(
+                            backgroundColor:
+                                MaterialStateProperty.all(Colors.purple)),
+                        onPressed: () {
+                          if (validate()) {
+                            login(username: username!, password: password!);
+                          }
+                        },
+                        child: const Text("Entrar",
+                            style: TextStyle(color: Colors.white))),
+                ],
+              ),
+            )));
   }
 }
-
-// void main() {
-//   final isValid = validate(username: "username", password: "password");
-//   if (isValid == null) {
-//     login(username: "username", password: "password");
-//   }
-// }
-
-// // parâmetros nomeados
-// void login({
-//   required String username,
-//   required String password,
-// }) {
-//   final response = validadeLogin(username: username, password: password);
-//   if (response) {
-//     print("Abrindo a HomePage");
-//   }
-// }
-
-// String? validate({required String password, required String username}) {
-//   final passwordIsValid = validadePassword(password);
-//   final usernameIsValid = validadeUsername(username);
-
-//   if (passwordIsValid == false) {
-//     return "A senha precisa ter 4 caracteres";
-//   }
-//   if (usernameIsValid == false) {
-//     return "O username precisa ser diferente de nulo";
-//   }
-
-//   return null;
-// }
-
-// bool validadeUsername(String? username) =>
-//     username != null && username.length > 0;
-// bool validadePassword(String? password) =>
-//     password != null && password.length > 4;
-
-// bool validadeLogin({required String username, required String password}) {
-//   print("Conectando no servidor");
-//   print("Login realizado com sucesso");
-//   return true;
-// }
